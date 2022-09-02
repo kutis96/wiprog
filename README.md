@@ -4,7 +4,7 @@ Program SPI flash memories wirelessly using this very crude ESP8266-based flashe
 
 ## What is this?
 
-An Arduino project for ESP8266, using SPIFFS for storage of static files.
+An Arduino project for ESP8266, using LittleFS for storage of static files.
 
 It's a thing that programs SPI flash chips when asked to do so!
 
@@ -19,6 +19,8 @@ time. It is still, however, somewhat useful.
 - It isn't amazingly well written. It is a huge mess, in fact.
 - It isn't well-documented. It works on my machine. I've forgotten why it does. I may document it better, when I one day
   try to build this on a different machine.
+- It isn't a product meant to be sold or developed further. If you wish to turn this into something like that, good
+  luck. You might want to start from scratch, though.
 
 Do not use this in production of any sort.
 
@@ -81,6 +83,25 @@ Erases and programs the connected flash IC to the contents of submitted payload.
 
 The target is put into reset while programming happens, and released from reset, regardless of whether it was or wasn't
 in reset before programming.
+
+## Configuration
+
+You _will_ have to configure the `wificonfig.h`'s contents based on the WiFi network you wish to connect this to.
+
+There is currently no way to change this at run-time.
+
+## Building
+
+Clone this repository into your Arduino sketchbooks directory and proceed as usual.
+
+The name of this project's directory should likely be `fpgaupload`, not `wiprog`; else you'll have to rename the
+main `.ino` file. I shall fix that someday. Or you can, for your first PR! Teamwork!
+
+You will need to have ESP8266 support installed in your Arduino IDE. 
+That is, you'll have to add `http://arduino.esp8266.com/stable/package_esp8266com_index.json` in `Preferences > Additional Board Manager URLs`.
+That worked for me in Arduino 1.8.13.
+
+You may also do something extra to upload the static resources to the LittleFS storage area. Probs the thing under `Tools > ESP8266 LittleFS Data Upload.`  
 
 ## Attributions
 

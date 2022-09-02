@@ -25,7 +25,7 @@ const int spiSS        = D1;
  *  D5 = SPI SCK
  *  D6 = SPI SDI/MISO
  *  D7 = SPI SDO/MOSI
- *  D8 = SPI CS
+ *  D1 = SPI CS
  */
 
 String webpage = "";
