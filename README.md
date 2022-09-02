@@ -21,6 +21,8 @@ time. It is still, however, somewhat useful.
   try to build this on a different machine.
 - It isn't a product meant to be sold or developed further. If you wish to turn this into something like that, good
   luck. You might want to start from scratch, though.
+- It isn't a remote AVR programmer. Maybe it could become one, someday. Probably not. You can try that, if you want.
+- It isn't going to be maintained. Feel free to fork it and maintain it yourself, if you find it useful.
 
 Do not use this in production of any sort.
 
