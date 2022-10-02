@@ -1,44 +1,153 @@
+<!DOCTYPE html>
 <html>
+
 <head>
-    <title>WiProg</title>
+  <title>WiProg</title>
+  <link rel="stylesheet" href="./style.css">
+  <script>
+    function apiCall(method, path, callback) {
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          callback(this.responseText);
+        }
+      };
+      xhttp.open(method, path, false); //synchronous
+      xhttp.send();
+    }
+
+    function reset(state) {
+      if (state) {
+        apiCall("POST", "/api/v1/targetreset", (text) => { refresh() });
+      } else {
+        apiCall("POST", "/api/v1/targetrelease", (text) => { refresh() });
+      }
+    }
+
+    function refresh() {
+      apiCall("GET", "/api/v1/uid", (text) => {
+        document.getElementById("fuid").innerHTML = text;
+      });
+      apiCall("GET", "/api/v1/jid", (text) => {
+        document.getElementById("fjid").innerHTML = text;
+      });
+      apiCall("GET", "/api/v1/targetreset", (text) => {
+        document.getElementById("resetstate").innerHTML = (text == "true") ? "RESET" : "RUNNING";
+      });
+    }
+
+    function setProgress(id, percentage, text) {
+      const element = document.getElementById(id);
+      element.style["width"] = `${percentage}%`
+      element.textContent = `${percentage}%`;
+    }
+
+    function uploadFlash() {
+      const flashFileInput = document.getElementById('flash');
+      const progressBar = "progress";
+
+      if (flashFileInput.files.length == 0) {
+        alert("No files selected.");
+        return;
+      }
+
+      //TODO: input validation
+
+      const data = new FormData();
+      data.append('flash', flashFileInput.files[0]);
+
+      setProgress(progressBar, 0);
+
+      const request = new XMLHttpRequest();
+      request.open('POST', "/api/v1/flash.bin");
+      request.addEventListener('progress', (e) => {
+        const percentDone = 100. * (e.loaded / e.total);
+        setProgress(progressBar, percentDone);
+      });
+      request.addEventListener('load', (e) => {
+        console.log(request.status);
+        console.log(request.response);
+      });
+      request.addEventListener('error', (e) => {
+        console.log(e);
+        alert("Flash programming failed. Try again!");
+      })
+
+      request.send(data);
+    }
+  </script>
 </head>
+
 <body>
-    <h3>Hello!</h3>
-    
-    <a href='/api/v1/flash.bin'>Download current flash image</a>
-    
-    <div>
+  <header>
+    <h2>Hello!</h3>
+      <p>
+        This is WiProg, your wireless SPI flash programmer!
+      </p>
+  </header>
+
+  <div class="container">
+    <div class="info">
+      <div class="panel">
+        <h3>Flash info</h3>
         <dl>
-            <dt>Flash UID</dt>
-            <dd id="fuid">Loading...</dd>
-            <dt>Flash JID</dt>
-            <dd id="fjid">Loading...</dd>
+          <dt>Flash UID</dt>
+          <dd id="fuid">?</dd>
+          <dt>Flash JID</dt>
+          <dd id="fjid">?</dd>
+          <dt>Flash size</dt>
+          <dd id="fsize">?</dd>
+          <dt>Target reset</dt>
+          <dd id="resetstate">?</dd>
         </dl>
+        <ul class="note">
+          <li>Clicking refresh briefly resets the target.</li>
+          <li>Flash size checks are not yet implemented.</li>
+          <li>Target reset refers to the current state of the target's reset line.</li>
+        </ul>
+        <button onclick="refresh()">Refresh</button>
+      </div>
     </div>
-    
-    <form action='/api/v1/flash.bin' method='post' enctype='multipart/form-data'>
-        <input type='file' name='flash' id='flash' value=''>
-        <button type='submit'>Upload new flash image</button>
-    </form>
-    
-    <script>
-        let xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-          if (this.readyState == 4 && this.status == 200) {
-            document.getElementById("fuid").innerHTML = this.responseText;
-          }
-        };
-        xhttp.open("GET", "/api/v1/uid", false);
-        xhttp.send();
-        
-        xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-          if (this.readyState == 4 && this.status == 200) {
-            document.getElementById("fjid").innerHTML = this.responseText;
-          }
-        };
-        xhttp.open("GET", "/api/v1/jid", false);
-        xhttp.send(); 
-    </script>
+
+    <div class="main">
+      <div class="panel">
+        <h3>Flash image</h3>
+        <div class="form">
+          <div class="progress">
+            <div id="progress"></div>
+          </div>
+          <input type='file' name='flash' id='flash' value=''>
+          <button type='submit' onclick="uploadFlash()">Upload new flash image</button>
+        </div>
+        <a href='/api/v1/flash.bin'>Download current flash image</a>
+        <ul class="note">
+          <li>Use this to actually flash data to your device.</li>
+          <li>Target device will be reset, and returned to the original reset state afterwards.</li>
+          <li>For now, all flash downloads are 16MB in size. Target size checking is not yet implemented.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h3>Target reset controls</h3>
+        <div>
+          <div class="form">
+            <button onclick="reset(true)">Reset</button>
+            <button onclick="reset(false)">Release</button>
+          </div>
+          <ul class="note">
+            <li>Use these to force the target device into reset.</li>
+            <li>Very useful for in-circuit programming!</li>
+          </ul>
+        </div>
+      </div>
+
+      <footer>
+        <img src="./favicon.ico">
+        by <a href="https://spacecatindustries.org">SpacecatIndustries.org</a>
+      </footer>
+    </div>
+  </div>
+
 </body>
+
 </html>

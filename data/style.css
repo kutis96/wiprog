@@ -1,0 +1,107 @@
+html {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    margin: auto;
+    max-width: 800px;
+}
+
+.container {
+    display: flex;
+    align-items: stretch;
+    gap: 1em;
+}
+
+.info {
+    flex-shrink: 7;
+    min-width: 250px;
+}
+
+.main {
+    flex-shrink: 1;
+}
+
+.note {
+    border-top: 1px solid #aaa;
+    color: #aaa;
+    font-family: monospace;
+    font-size: 75%;
+    padding: 0.5em 0;
+}
+
+.form {
+    padding: 0.5em 0;
+}
+
+footer {
+    padding-top: 1em;
+    font-family: monospace;
+    color: #aaa;
+}
+
+a {
+    color: #aaa;
+    font-family: monospace;
+}
+
+footer img {
+    vertical-align: middle;
+}
+
+.panel {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 1em 2em;
+    margin: 1em 0em;
+}
+
+.panel h3 {
+    margin-top: 0.25em;
+}
+
+dd {
+    padding-bottom: 0.5em;
+    color: #aaa;
+    font-family: monospace;
+}
+
+dd::before {
+    content: "= ";
+}
+
+ul {
+    list-style-position: outside;
+    list-style-type: "- ";
+}
+
+.progress {
+    width: 100%;
+    text-align: center;
+    font-size: 50%;
+    background-color: #ccc;
+    margin: 0.5em 0;
+    border-radius: 5px;
+}
+
+.progress div {
+    background-color: #333;
+    color: #ccc;
+    border-radius: 5px;
+    max-width: 100%;
+}
+
+/* button,
+.button {
+    border: none;
+    border-radius: 5px;
+    padding: 0.5em 2ch;
+    background-color: #eee;
+}
+
+button:hover,
+.button:hover,
+button:focus,
+.button:focus {
+    background-color: #ccc;
+} */
