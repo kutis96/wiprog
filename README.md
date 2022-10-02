@@ -96,8 +96,7 @@ There is currently no way to change this at run-time.
 
 Clone this repository into your Arduino sketchbooks directory and proceed as usual.
 
-The name of this project's directory should likely be `fpgaupload`, not `wiprog`; else you'll have to rename the
-main `.ino` file. I shall fix that someday. Or you can, for your first PR! Teamwork!
+The name of this project's directory should likely be `wiprog`, matching the name of the .ino file.
 
 You will need to have ESP8266 support installed in your Arduino IDE. 
 That is, you'll have to add `http://arduino.esp8266.com/stable/package_esp8266com_index.json` in `Preferences > Additional Board Manager URLs`.
