@@ -7,9 +7,13 @@
 #ifndef SPIFLASH_H
 #define SPIFLASH_H
 
+enum SPIFlashFailure {
+  TIMEOUT_EXPIRED
+};
+
 class SPIFlash {
   public:
-    SPIFlash(int _cs) : cspin(_cs) {};
+    SPIFlash(int _cs, long _frequency = 50e6, long _timeout = 1000) : cspin(_cs), frequency(_frequency), timeout(_timeout) {};
     void begin() {pinMode(cspin, OUTPUT); disable(); reset();};
     void end() {pinMode(cspin, INPUT); };
     void reset();
@@ -19,13 +23,16 @@ class SPIFlash {
     void fastReadBegin(uint32_t address);
     uint8_t fastReadByte();
     void fastReadEnd();
+    /**
+    * Busy-waits on SPI status
+    */
     void busyWait();
-    void busyWait2();
     void writeEnable();
     void writeDisable();
     void chipErase();
     void sectorErase(uint32_t address); //4K sectors
     void pageProgram(uint32_t address, uint8_t* buffer256);
+    uint32_t getSize(); //get size in bytes
   private:
     void enable();
     void disable();
@@ -33,7 +40,9 @@ class SPIFlash {
     uint32_t transfer24(uint32_t address);
     uint64_t transfer64(uint64_t address);
     
-    int cspin;
+    int cspin;      //chip select pin
+    long frequency; //SPI frequency
+    long timeout;   //busywait timeout in milliseconds
 };
 
 #endif

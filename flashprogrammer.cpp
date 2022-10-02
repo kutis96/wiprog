@@ -5,11 +5,12 @@ void FlashProgrammer::begin( uint32_t offset) {
   _address = offset;
 
   _flash.begin();
+  _flash.reset();
 }
 void FlashProgrammer::write(uint8_t b) {
   _buffer[_address & 0xFF] = b;
   _bufcontent++;
-  _performWrite();
+  _performWrite(); //erases page on early page boundary, writes page on late page boundary
   _address++;
 }
 void FlashProgrammer::end() {
@@ -21,7 +22,7 @@ void FlashProgrammer::end() {
       _buffer[i] = 0xFF; //clear invalid data
     }
     _address |= 0xFF; //trigger page write
-    _performWrite();
+    _performWrite();  //^ mildly ugly >:/
   }
   _flash.end();
 }
@@ -67,6 +68,5 @@ void FlashProgrammer::_performWrite() {
         Serial.println();
     }
     _flash.fastReadEnd();
-    
   }
 }

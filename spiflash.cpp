@@ -17,6 +17,7 @@ const uint8_t SPIF_SECTOR_ERASE = 0x20;
 const uint8_t SPIF_CHIP_ERASE = 0x60;
 const uint8_t SPIF_PAGE_PROGRAM = 0x02;
 
+
 void SPIFlash::reset() {
   enable();
   transfer(SPIF_ENABLE_RESET);
@@ -66,10 +67,14 @@ void SPIFlash::pageProgram(uint32_t address, uint8_t buffer256[]) {
 void SPIFlash::busyWait() {
   enable();
   transfer(SPIF_READ_STATUS_REG_1);
+  long startTime = millis();
   while(transfer(0) & 1) {
     //busywait
-    delay(50);
-    Serial.print('B');
+    delay(1);
+    if((millis() - startTime) > timeout) {
+      disable();
+      throw TIMEOUT_EXPIRED;
+    }
   };
   disable();
 }
@@ -113,6 +118,10 @@ uint64_t SPIFlash::getUniqueId() {
   return uid;
 }
 
+uint32_t SPIFlash::getSize() {
+  return 1 << 24; //TODO: Implement
+}
+
 void SPIFlash::fastReadBegin(uint32_t address) {
   enable();
   transfer(SPIF_FAST_READ);
@@ -138,7 +147,7 @@ void SPIFlash::fastRead(uint32_t address, const uint32_t howMany, uint8_t* buffe
 void SPIFlash::enable() {
   digitalWrite(cspin, LOW);
   SPI.beginTransaction(
-    SPISettings(50e6, MSBFIRST, SPI_MODE0)
+    SPISettings(frequency, MSBFIRST, SPI_MODE0)
   );
 }
 void SPIFlash::disable() {
