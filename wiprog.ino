@@ -173,6 +173,10 @@ String decodeMimeType(String path) {
 
 boolean apiReadFile(String path) {
   toggleLed();
+
+  if(path.indexOf("config") >= 0)
+    return false; //do not read config files
+
   if (LittleFS.exists(path)) {
     File file = LittleFS.open(path, "r");
     int readSize = file.size();
