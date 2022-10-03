@@ -86,11 +86,34 @@ Erases and programs the connected flash IC to the contents of submitted payload.
 The target is put into reset while programming happens, and released from reset, regardless of whether it was or wasn't
 in reset before programming.
 
+### `GET /api/v1/hostname`
+
+Returns the device's mDNS hostname.
+
 ## Configuration
 
-You _will_ have to configure the `wificonfig.h`'s contents based on the WiFi network you wish to connect this to.
+All configuration is now stored as multiple files within `data/config/` directory.
 
-There is currently no way to change this at run-time.
+These files are to be uploaded to the ESP8266's LittleFS.
+
+**You will have to configure these yourself before use.**
+
+To do that, you'll have to:
+
+- Create a directory under `data/` of this repository named `config`.
+- In `data/config/` directory, add files with the following names (no extensions, edit them in notepad or something. Do not insert newlines at the end of the file.):
+
+- `wifi-ssid`
+  - Must contain the SSID of the WiFi network WiProg will connect to
+  - defaults to `SSID` when not set
+- `wifi-pass`
+  - Must contain the password of the WiFi network WiProg will connect to
+  - defaults to `password` when not set
+- `hostname`
+  - Must contain the mDNS hostname
+  - defaults to `wiprog`
+  - You may then simply connect to `{hostname}.local` (like http://wiprog.local) in your web browser, should your system support mDNS.
+    - This functionality is still untested as of now.
 
 ## Building
 

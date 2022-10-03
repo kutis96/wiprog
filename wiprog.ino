@@ -262,8 +262,9 @@ void setup(void) {
   Serial.println(WiFi.localIP());
 
   if (MDNS.begin(hostname)) {
+    MDNS.addService("http", "tcp", 80);
     Serial.println("MDNS responder started");
-    Serial.println("hostname: " + hostname);
+    Serial.println("hostname: '" + hostname + "'");
   }
 
   server.on("/", []() {
@@ -351,6 +352,7 @@ void setup(void) {
   Serial.println("HTTP server started");
 }
 void loop(void) {
+  MDNS.update();
   server.handleClient();
 }
 
