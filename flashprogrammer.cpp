@@ -1,5 +1,6 @@
 #include "flashprogrammer.h"
 #include "spiflash.h"
+#include "logging.h"
 
 void FlashProgrammer::begin( uint32_t offset) {
   _address = offset;
@@ -16,8 +17,8 @@ void FlashProgrammer::write(uint8_t b) {
 void FlashProgrammer::end() {
   //Write the last bits from buffer
   if(_bufcontent > 0) {
-    Serial.println("Bufcontent was");
-    Serial.print(_bufcontent);
+    DEBUG("Bufcontent was:" + _bufcontent);
+
     for(int i = _bufcontent; i < 256; i++) {
       _buffer[i] = 0xFF; //clear invalid data
     }
@@ -31,8 +32,9 @@ void FlashProgrammer::_performWrite() {
     _flash.busyWait();
     _flash.writeEnable();
     _flash.busyWait();
-    Serial.print("Erasing sector ");
-    Serial.println(_address, HEX);
+
+    DEBUG_HEXVALUE("Erasing sector ", _address);
+
     _flash.sectorErase(_address);
     _flash.busyWait();
     _flash.fastReadBegin(_address & 0xFFF000);
@@ -51,8 +53,9 @@ void FlashProgrammer::_performWrite() {
   if((_address & 0xFF) == 0xFF) {  //late page boundary
     _bufcontent = 0;
     _flash.busyWait();
-    Serial.print("Writing page ");
-    Serial.println(_address, HEX);
+
+    DEBUG_HEXVALUE("Writing page ", _address);
+
     _flash.writeEnable();
     _flash.busyWait();
     _flash.pageProgram(_address & 0xFFFF00, _buffer);

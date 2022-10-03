@@ -9,6 +9,7 @@
 #include "spiflash.h"
 #include "flashprogrammer.h"
 #include "wificonfig.h"
+#include "logging.h"
 
 ESP8266WebServer server(80);
 
@@ -29,6 +30,7 @@ const int flashSelectPin = D1;
  */
 
 String webpage = "";
+String hostname;
 
 SPIFlash flash = SPIFlash(flashSelectPin);
 FlashProgrammer flashProgrammer = FlashProgrammer(flash);
@@ -45,11 +47,11 @@ void setTargetReset(bool doReset) {
   if (doReset) { //reset is active-low
     pinMode(targetResetPin, OUTPUT);
     digitalWrite(targetResetPin, LOW);
-    Serial.println("Target Reset");
+    DEBUG("Target Reset");
   } else {
     pinMode(targetResetPin, INPUT_PULLUP);
     digitalWrite(targetResetPin, HIGH);  //extraneous?
-    Serial.println("Target Released");
+    DEBUG("Target Released");
   }
 }
 
@@ -92,6 +94,10 @@ void apiGetUID() {
   flashBegin();
   server.send(200, "text/plain", toHex64String(flash.getUniqueId(), 64));  //64 bits
   flashEnd();
+}
+
+void apiGetHostname() {
+  server.send(200, "text/plain", hostname);
 }
 
 void apiSetTargetReset() {
@@ -216,29 +222,29 @@ void setup(void) {
 
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, 0);
-  
+
   Serial.begin(2000000);
   
   if (LittleFS.begin()) {
-    Serial.println("FS init ok.");
+    INFO("LittleFS init ok.");
   } else {
-    Serial.println("FS init failed.");
+    WARN("LittleFS init failed.");
   }
 
-  Serial.println("Loading config...");
+  INFO("Loading config...");
   configStore.load();
-  Serial.println("Config loaded.");
+  INFO("Config loaded.");
 
-  String hostname = configStore.getString("hostname", "wiprog");
+  hostname = configStore.getString("hostname", "wiprog");
   String wifi_ssid = configStore.getString("wifi-ssid", "SSID");
   String wifi_pass = configStore.getString("wifi-pass", "password");
 
   configStore.save();
 
-  Serial.println("Connecting to " + wifi_ssid);
+  INFO("Connecting to " + wifi_ssid);
 
   WiFi.begin(wifi_ssid, wifi_pass);
-  Serial.println("");
+  INFO("");
 
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
@@ -265,6 +271,7 @@ void setup(void) {
   server.on("/api/v1/jid", HTTP_GET, apiGetJID);
   server.on("/api/v1/uid", HTTP_GET, apiGetUID);
   server.on("/api/v1/flash.bin", HTTP_GET, apiDownloadFlash);
+  server.on("/api/v1/hostname", HTTP_GET, apiGetHostname);
   server.on(
     "/api/v1/flash.bin", HTTP_POST, []() {
       server.send(200);
