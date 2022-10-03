@@ -5,14 +5,14 @@
 #include <SPI.h>
 #include <LittleFS.h>
 
+#include "configstore.h"
 #include "spiflash.h"
 #include "flashprogrammer.h"
 #include "wificonfig.h"
 
-const char* ssid = STASSID;
-const char* password = STAPSK;
-
 ESP8266WebServer server(80);
+
+ConfigStore configStore;
 
 const int ledPin = LED_BUILTIN;
 const int targetResetPin = D0;
@@ -216,10 +216,28 @@ void setup(void) {
 
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, 0);
-  //Serial.begin(115200);
+  
   Serial.begin(2000000);
+  
+  if (LittleFS.begin()) {
+    Serial.println("FS init ok.");
+  } else {
+    Serial.println("FS init failed.");
+  }
 
-  WiFi.begin(ssid, password);
+  Serial.println("Loading config...");
+  configStore.load();
+  Serial.println("Config loaded.");
+
+  String hostname = configStore.getString("hostname", "wiprog");
+  String wifi_ssid = configStore.getString("wifi-ssid", "SSID");
+  String wifi_pass = configStore.getString("wifi-pass", "password");
+
+  configStore.save();
+
+  Serial.println("Connecting to " + wifi_ssid);
+
+  WiFi.begin(wifi_ssid, wifi_pass);
   Serial.println("");
 
   // Wait for connection
@@ -229,18 +247,13 @@ void setup(void) {
   }
   Serial.println("");
   Serial.print("Connected to ");
-  Serial.println(ssid);
+  Serial.println(wifi_ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("wiprog")) {
+  if (MDNS.begin(hostname)) {
     Serial.println("MDNS responder started");
-  }
-
-  if (LittleFS.begin()) {
-    Serial.println("FS init ok.");
-  } else {
-    Serial.println("FS init failed.");
+    Serial.println("hostname: " + hostname);
   }
 
   server.on("/", []() {
