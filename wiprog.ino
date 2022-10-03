@@ -5,14 +5,15 @@
 #include <SPI.h>
 #include <LittleFS.h>
 
+#include "configstore.h"
 #include "spiflash.h"
 #include "flashprogrammer.h"
 #include "wificonfig.h"
-
-const char* ssid = STASSID;
-const char* password = STAPSK;
+#include "logging.h"
 
 ESP8266WebServer server(80);
+
+ConfigStore configStore;
 
 const int ledPin = LED_BUILTIN;
 const int targetResetPin = D0;
@@ -29,6 +30,7 @@ const int flashSelectPin = D1;
  */
 
 String webpage = "";
+String hostname;
 
 SPIFlash flash = SPIFlash(flashSelectPin);
 FlashProgrammer flashProgrammer = FlashProgrammer(flash);
@@ -45,11 +47,11 @@ void setTargetReset(bool doReset) {
   if (doReset) { //reset is active-low
     pinMode(targetResetPin, OUTPUT);
     digitalWrite(targetResetPin, LOW);
-    Serial.println("Target Reset");
+    DEBUG("Target Reset");
   } else {
     pinMode(targetResetPin, INPUT_PULLUP);
     digitalWrite(targetResetPin, HIGH);  //extraneous?
-    Serial.println("Target Released");
+    DEBUG("Target Released");
   }
 }
 
@@ -92,6 +94,10 @@ void apiGetUID() {
   flashBegin();
   server.send(200, "text/plain", toHex64String(flash.getUniqueId(), 64));  //64 bits
   flashEnd();
+}
+
+void apiGetHostname() {
+  server.send(200, "text/plain", hostname);
 }
 
 void apiSetTargetReset() {
@@ -167,6 +173,10 @@ String decodeMimeType(String path) {
 
 boolean apiReadFile(String path) {
   toggleLed();
+
+  if(path.indexOf("config") >= 0)
+    return false; //do not read config files
+
   if (LittleFS.exists(path)) {
     File file = LittleFS.open(path, "r");
     int readSize = file.size();
@@ -216,11 +226,29 @@ void setup(void) {
 
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, 0);
-  //Serial.begin(115200);
-  Serial.begin(2000000);
 
-  WiFi.begin(ssid, password);
-  Serial.println("");
+  Serial.begin(2000000);
+  
+  if (LittleFS.begin()) {
+    INFO("LittleFS init ok.");
+  } else {
+    WARN("LittleFS init failed.");
+  }
+
+  INFO("Loading config...");
+  configStore.load();
+  INFO("Config loaded.");
+
+  hostname = configStore.getString("hostname", "wiprog");
+  String wifi_ssid = configStore.getString("wifi-ssid", "SSID");
+  String wifi_pass = configStore.getString("wifi-pass", "password");
+
+  configStore.save();
+
+  INFO("Connecting to " + wifi_ssid);
+
+  WiFi.begin(wifi_ssid, wifi_pass);
+  INFO("");
 
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
@@ -229,18 +257,14 @@ void setup(void) {
   }
   Serial.println("");
   Serial.print("Connected to ");
-  Serial.println(ssid);
+  Serial.println(wifi_ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("wiprog")) {
+  if (MDNS.begin(hostname)) {
+    MDNS.addService("http", "tcp", 80);
     Serial.println("MDNS responder started");
-  }
-
-  if (LittleFS.begin()) {
-    Serial.println("FS init ok.");
-  } else {
-    Serial.println("FS init failed.");
+    Serial.println("hostname: '" + hostname + "'");
   }
 
   server.on("/", []() {
@@ -252,6 +276,7 @@ void setup(void) {
   server.on("/api/v1/jid", HTTP_GET, apiGetJID);
   server.on("/api/v1/uid", HTTP_GET, apiGetUID);
   server.on("/api/v1/flash.bin", HTTP_GET, apiDownloadFlash);
+  server.on("/api/v1/hostname", HTTP_GET, apiGetHostname);
   server.on(
     "/api/v1/flash.bin", HTTP_POST, []() {
       server.send(200);
@@ -327,6 +352,7 @@ void setup(void) {
   Serial.println("HTTP server started");
 }
 void loop(void) {
+  MDNS.update();
   server.handleClient();
 }
 

@@ -2,6 +2,7 @@
 #include <list>
 #include "spiflash.h"
 #include <SPI.h>
+#include "logging.h"
 
 const uint8_t SPIF_ENABLE_RESET = 0x66;
 const uint8_t SPIF_RESET = 0x99;
@@ -53,8 +54,7 @@ void SPIFlash::chipErase() {
 }
 
 void SPIFlash::pageProgram(uint32_t address, uint8_t buffer256[]) {
-  Serial.print("Programming from address ");
-  Serial.println(address, HEX);
+  DEBUG_HEXVALUE("Programming page from address ", address);
   enable();
   transfer(SPIF_PAGE_PROGRAM);
   transfer24(address);

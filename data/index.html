@@ -25,14 +25,22 @@
     }
 
     function refresh() {
+      apiCall("GET", "/api/v1/targetreset", (text) => {
+        document.getElementById("resetstate").innerHTML = (text == "true") ? "RESET" : "RUNNING";
+      });
+      apiCall("GET", "/api/v1/hostname", (text) => {
+        // document.getElementById("hostname").innerHTML = text;
+        document.title = "WiProg - " + text;
+      });
+    }
+
+    function refresh_invasive() {
+      refresh();
       apiCall("GET", "/api/v1/uid", (text) => {
         document.getElementById("fuid").innerHTML = text;
       });
       apiCall("GET", "/api/v1/jid", (text) => {
         document.getElementById("fjid").innerHTML = text;
-      });
-      apiCall("GET", "/api/v1/targetreset", (text) => {
-        document.getElementById("resetstate").innerHTML = (text == "true") ? "RESET" : "RUNNING";
       });
     }
 
@@ -82,7 +90,7 @@
   <header>
     <h2>Hello!</h3>
       <p>
-        This is WiProg, your wireless SPI flash programmer!
+        This is <span id="instancename">WiProg</span>, your wireless SPI flash programmer!
       </p>
   </header>
 
@@ -105,7 +113,7 @@
           <li>Flash size checks are not yet implemented.</li>
           <li>Target reset refers to the current state of the target's reset line.</li>
         </ul>
-        <button onclick="refresh()">Refresh</button>
+        <button onclick="refresh_invasive()">Refresh</button>
       </div>
     </div>
 
@@ -146,6 +154,10 @@
         by <a href="https://spacecatindustries.org">SpacecatIndustries.org</a>
       </footer>
     </div>
+
+    <script>
+      refresh();
+    </script>
   </div>
 
 </body>
