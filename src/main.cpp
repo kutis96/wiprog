@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
@@ -9,6 +10,7 @@
 #include "SPIFlash.h"
 #include "FlashProgrammer.h"
 #include "logging.h"
+#include "Utils.h"
 
 ESP8266WebServer server(80);
 
@@ -91,17 +93,37 @@ void flashEnd()
   setTargetReset(previousResetState);
 }
 
+void SendHTML_Header(int code)
+{
+  server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  server.sendHeader("Pragma", "no-cache");
+  server.sendHeader("Expires", "-1");
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(code, "text/html", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+  webpage = "";
+}
+void SendHTML_Content()
+{
+  server.sendContent(webpage);
+  webpage = "";
+}
+void SendHTML_Stop()
+{
+  server.sendContent("");
+  server.client().stop(); // Stop is needed because no content length was sent
+}
+
 void apiGetJID()
 {
   flashBegin();
-  server.send(200, "text/plain", toHex64String(flash.getJedecId(), 24)); // 24 bits
+  server.send(200, "text/plain", toHexString(flash.getJedecId(), 24)); // 24 bits
   flashEnd();
 }
 
 void apiGetUID()
 {
   flashBegin();
-  server.send(200, "text/plain", toHex64String(flash.getUniqueId(), 64)); // 64 bits
+  server.send(200, "text/plain", toHexString(flash.getUniqueId(), 64)); // 64 bits
   flashEnd();
 }
 
@@ -157,42 +179,6 @@ void apiDownloadFlash()
   flashEnd();
 }
 
-void apiGetFile()
-{
-  apiReadFileOr404(server.uri());
-}
-
-std::map<String, String> mimetypes = {
-    std::pair<String, String>(".html", "text/html"),
-    std::pair<String, String>(".css", "text/css"),
-    std::pair<String, String>(".png", "image/png"),
-    std::pair<String, String>(".jpg", "image/jpeg"),
-    std::pair<String, String>(".ico", "image/x-icon"),
-    std::pair<String, String>(".gif", "image/gif"),
-    std::pair<String, String>(".js", "application/javascript"),
-    std::pair<String, String>(".bin", "application/octet-stream"),
-};
-
-String decodeMimeType(String path)
-{
-  String suffix = ".bin";
-  if (path.lastIndexOf('.') != -1)
-  {
-    suffix = path.substring(path.lastIndexOf('.'));
-  }
-
-  std::map<String, String>::iterator it;
-  it = mimetypes.find(suffix);
-  if (it != mimetypes.end())
-  {
-    return it->second;
-  }
-  else
-  {
-    return "application/octet-stream";
-  }
-}
-
 boolean apiReadFile(String path)
 {
   toggleLed();
@@ -243,6 +229,11 @@ void apiReadFileOr404(String path)
       SendHTML_Stop();
     }
   }
+}
+
+void apiGetFile()
+{
+  apiReadFileOr404(server.uri());
 }
 
 void setup(void)
@@ -372,7 +363,7 @@ void setup(void)
               webpage += F("<h2>Uploaded File Name: ");
               webpage += uploadfile.filename + "</h2>";
               webpage += F("<h2>File Size: ");
-              webpage += file_size(uploadfile.totalSize) + "</h2><br>";
+              webpage += toHumanReadableSize(uploadfile.totalSize) + "</h2><br>";
               SendHTML_Content();
               SendHTML_Stop();
             }
@@ -404,61 +395,4 @@ void loop(void)
 {
   MDNS.update();
   server.handleClient();
-}
-
-void SendHTML_Header(int code)
-{
-  server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  server.sendHeader("Pragma", "no-cache");
-  server.sendHeader("Expires", "-1");
-  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
-  server.send(code, "text/html", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
-  webpage = "";
-}
-void SendHTML_Content()
-{
-  server.sendContent(webpage);
-  webpage = "";
-}
-void SendHTML_Stop()
-{
-  server.sendContent("");
-  server.client().stop(); // Stop is needed because no content length was sent
-}
-
-void ReportCouldNotCreateFile(String target)
-{
-  SendHTML_Header(403);
-  webpage += F("<h3>Could Not Create Uploaded File (write-protected?)</h3>");
-  webpage += F("<a href='/");
-  webpage += target + "'>[Back]</a><br><br>";
-  SendHTML_Content();
-  SendHTML_Stop();
-}
-
-String file_size(int bytes)
-{
-  String fsize = "";
-  if (bytes < 1024)
-    fsize = String(bytes) + " B";
-  else if (bytes < (1024 * 1024))
-    fsize = String(bytes / 1024.0, 3) + " KiB";
-  else if (bytes < (1024 * 1024 * 1024))
-    fsize = String(bytes / 1024.0 / 1024.0, 3) + " MiB";
-  else
-    fsize = String(bytes / 1024.0 / 1024.0 / 1024.0, 3) + " GiB";
-  return fsize;
-}
-
-String toHex64String(uint64_t n, uint8_t bits)
-{
-  uint8_t nHexChars = (bits / 4) + ((bits % 4 > 0) ? 1 : 0);
-
-  const char hexmap[] = "0123456789ABCDEF";
-  String str = "";
-  for (int i = nHexChars - 1; i >= 0; i -= 1)
-  {
-    str += hexmap[(n >> (4 * i)) & 0x0F];
-  }
-  return str;
 }
