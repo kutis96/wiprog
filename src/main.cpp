@@ -356,7 +356,6 @@ void setup(void)
             Serial.print("Upload Size: ");
             Serial.println(uploadfile.totalSize);
 
-            if (!apiReadFile("uploadok.html"))
             {
               SendHTML_Header(200);
               webpage += F("<h3>File was successfully uploaded</h3>");
