@@ -1,2 +1,4 @@
 /wificonfig.h
 /data/config/**
+.pio/
+.vscode/

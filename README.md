@@ -117,15 +117,17 @@ To do that, you'll have to:
 
 ## Building
 
-Clone this repository into your Arduino sketchbooks directory and proceed as usual.
+This project is now using [PlatformIO](https://platformio.org/)!
 
-The name of this project's directory should likely be `wiprog`, matching the name of the .ino file.
+Build & upload binary:
+- `pio run -e ${target_board}` -t upload --upload-port ${target_port}`
 
-You will need to have ESP8266 support installed in your Arduino IDE. 
-That is, you'll have to add `http://arduino.esp8266.com/stable/package_esp8266com_index.json` in `Preferences > Additional Board Manager URLs`.
-That worked for me in Arduino 1.8.13.
+Build & upload LittleFS image:
+- `pio run -e ${target_board}` -t uploadfs --upload-port ${target_port}`
 
-You may also do something extra to upload the static resources to the LittleFS storage area. Probs the thing under `Tools > ESP8266 LittleFS Data Upload.`  
+Replace `${target_board}` with `d1_mini_pro` (currently the only supported board).
+
+Replace `${target_port}` with the COM port the board is connected to (like COM9 on Windows).
 
 ## Attributions
 
